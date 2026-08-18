@@ -21,14 +21,32 @@ public partial class MainWindow : Window
 {
     public PaneState State { get; private set; } = PaneState.Closed;
 
-    private readonly OllamaClient _ollama = new(AppConfig.OllamaEndpoint, AppConfig.RequestTimeout);
+    private OllamaClient _ollama = BuildOllamaClient();
     private CancellationTokenSource? _cts;
 
     public MainWindow()
     {
         InitializeComponent();
         OutputContainer.SizeChanged += (_, _) => AutoFitText();
+
+        var cfg = AppConfig.Current;
+        if (cfg.PaneLeft is double left && cfg.PaneTop is double top &&
+            cfg.PaneWidth is double w && cfg.PaneHeight is double h)
+        {
+            Left = left;
+            Top = top;
+            Width = w;
+            Height = h;
+        }
     }
+
+    private static OllamaClient BuildOllamaClient() =>
+        new(AppConfig.Current.OllamaEndpoint, TimeSpan.FromSeconds(AppConfig.Current.TimeoutSeconds));
+
+    /// <summary>Called after settings are saved: endpoint/timeout are baked into
+    /// the HttpClient, so it must be rebuilt; model/target language are read
+    /// fresh from AppConfig.Current on every request already.</summary>
+    public void ApplySettings() => _ollama = BuildOllamaClient();
 
     /// <summary>Advances the open -> trigger -> close cycle by one step.</summary>
     public void CycleState()
@@ -79,7 +97,7 @@ public partial class MainWindow : Window
         {
             var pngBytes = ScreenCapture.CapturePaneRegion(this);
             var translation = await _ollama.TranslateImageAsync(
-                pngBytes, AppConfig.ModelName, AppConfig.TargetLanguage, _cts.Token);
+                pngBytes, AppConfig.Current.ModelName, AppConfig.Current.TargetLanguage, _cts.Token);
 
             var trimmed = translation.Trim();
             if (string.IsNullOrWhiteSpace(trimmed) ||

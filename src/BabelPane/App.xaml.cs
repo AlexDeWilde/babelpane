@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Input;
 using Application = System.Windows.Application;
 
 namespace BabelPane;
@@ -18,22 +19,35 @@ public partial class App : Application
 
         _hotkeyManager = new HotkeyManager(_mainWindow);
         _hotkeyManager.Pressed += () => _mainWindow!.CycleState();
-        // Default hotkey per DECISIONS.md: Win+Alt+X. VK_X = 0x58.
-        if (!_hotkeyManager.Register(HotkeyModifiers.Win | HotkeyModifiers.Alt, 0x58))
-        {
-            System.Windows.MessageBox.Show(
-                "Could not register the global hotkey (Win+Alt+X). It may already be in use.",
-                "BabelPane", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
+        RegisterHotkeyFromSettings();
+        AppConfig.SettingsChanged += OnSettingsChanged;
 
         _trayIcon = CreateTrayIcon();
+    }
+
+    private void RegisterHotkeyFromSettings()
+    {
+        var cfg = AppConfig.Current;
+        var vk = (uint)KeyInterop.VirtualKeyFromKey(cfg.HotkeyKey);
+        if (!_hotkeyManager!.Register(cfg.HotkeyModifiers, vk))
+        {
+            System.Windows.MessageBox.Show(
+                $"Could not register the global hotkey ({cfg.HotkeyModifiers}+{cfg.HotkeyKey}). It may already be in use.",
+                "BabelPane", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void OnSettingsChanged()
+    {
+        RegisterHotkeyFromSettings();
+        _mainWindow?.ApplySettings();
     }
 
     private NotifyIcon CreateTrayIcon()
     {
         var menu = new ContextMenuStrip();
         menu.Items.Add("Open widget pane", null, (_, _) => OpenWidgetPane());
-        menu.Items.Add("Open settings", null, (_, _) => OpenSettingsStub());
+        menu.Items.Add("Open settings", null, (_, _) => OpenSettingsWindow());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitApplication());
 
@@ -60,15 +74,14 @@ public partial class App : Application
         }
     }
 
-    private void OpenSettingsStub()
+    private void OpenSettingsWindow()
     {
-        System.Windows.MessageBox.Show(
-            "Settings window is not implemented yet (planned for a later milestone).",
-            "BabelPane", MessageBoxButton.OK, MessageBoxImage.Information);
+        new SettingsWindow().ShowDialog();
     }
 
     private void ExitApplication()
     {
+        SaveGeometry();
         _trayIcon!.Visible = false;
         _trayIcon.Dispose();
         _hotkeyManager?.Dispose();
@@ -77,8 +90,29 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        SaveGeometry();
         _trayIcon?.Dispose();
         _hotkeyManager?.Dispose();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Persists pane size/position (never its content) so it reopens in the
+    /// same place after an app restart, regardless of whether the pane
+    /// itself was open or closed at the time.
+    /// </summary>
+    private void SaveGeometry()
+    {
+        if (_mainWindow == null)
+        {
+            return;
+        }
+
+        var cfg = AppConfig.Current;
+        cfg.PaneLeft = _mainWindow.Left;
+        cfg.PaneTop = _mainWindow.Top;
+        cfg.PaneWidth = _mainWindow.Width;
+        cfg.PaneHeight = _mainWindow.Height;
+        cfg.SaveGeometry();
     }
 }

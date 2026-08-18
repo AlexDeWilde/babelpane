@@ -102,3 +102,11 @@ quality of the product. Do not paste full conversations.
 - **Team decision:** Accepted after retest confirmed the blank-area case now shows the correct "no text detected" message.
 - **Reason:** A model's natural-language response can't be trusted to reliably signal "nothing to report" on its own; giving it an explicit, checkable token is more robust than inferring intent from prose.
 - **Consequence:** `OllamaClient.NoTextSentinel` is the contract between the prompt and `MainWindow`'s result handling — if the prompt ever changes, the sentinel instruction and the check in `RunTriggerAsync` must change together.
+
+### Added an unplanned milestone for settings window + geometry persistence
+
+- **Context:** A gap check against `PRODUCT_BRIEF.md`'s Must Demonstrate list, done before starting M4, found two required items with no home in the original 4 named milestones (M1-M4 from the execution-plan template): the settings window (endpoint/model/target language/timeout/hotkey) and pane size/position persisting across app restarts. Both had been stubbed out (a "not implemented" message; no saved geometry at all) since M1/M2.
+- **Claude Code proposal:** Build both now, as an extra milestone before M4, rather than either silently skipping the gap or quietly folding scope into M4 unannounced.
+- **Team decision:** Accepted — build now.
+- **Reason:** Both items are explicitly required by the brief's Must Demonstrate list and tested rows in its Acceptance Evidence table; M4 is meant to validate a feature-complete build against the brief, not to discover missing features.
+- **Consequence:** `AppConfig` became a mutable, persisted settings class (`%AppData%\BabelPane\settings.json`) instead of hardcoded constants; new `SettingsWindow`; pane geometry is saved on app exit (both explicit tray-Exit and `OnExit`) and restored on the next launch. Verified: settings changes (target language, hotkey) took effect immediately, and geometry (position + size) was confirmed identical after a real exit-and-relaunch cycle.
