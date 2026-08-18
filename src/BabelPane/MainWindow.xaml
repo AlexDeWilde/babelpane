@@ -18,25 +18,59 @@
     <Grid>
         <!-- Border chrome: the only part that is visually opaque and mouse-hittable.
              Dragging the pane happens from here; the center stays pass-through so the
-             content underneath remains visible. -->
+             content underneath remains visible while positioning the pane. -->
         <Border x:Name="Chrome"
                 BorderBrush="#FF3AA0FF"
                 BorderThickness="2"
                 Background="#0C3AA0FF"
                 MouseLeftButtonDown="Chrome_MouseLeftButtonDown"
-                Cursor="SizeAll">
-            <Grid Background="{x:Null}" IsHitTestVisible="False">
-                <TextBlock x:Name="StatusText"
-                           Margin="10"
-                           VerticalAlignment="Top"
-                           HorizontalAlignment="Left"
-                           Foreground="#FF3AA0FF"
-                           FontFamily="Consolas"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           IsHitTestVisible="False" />
-            </Grid>
-        </Border>
+                Cursor="SizeAll" />
+
+        <!-- Legibility backdrop behind the translated text / busy indicator.
+             Hidden while idle so the pane stays see-through for positioning. -->
+        <Border x:Name="ContentBackdrop"
+                Margin="4"
+                Background="#CC101418"
+                Visibility="Collapsed"
+                IsHitTestVisible="False" />
+
+        <!-- Translated output. FontSize is computed at runtime (see AutoFitText)
+             to fill the available space rather than relying on Viewbox scaling,
+             which only fits well when the text's natural aspect ratio happens
+             to match the pane's. -->
+        <Grid x:Name="OutputContainer" Margin="14" IsHitTestVisible="False">
+            <TextBlock x:Name="OutputText"
+                       Foreground="White"
+                       FontFamily="Segoe UI"
+                       TextWrapping="Wrap"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Top" />
+        </Grid>
+
+        <!-- Busy indicator, shown only while a request is in flight. -->
+        <StackPanel x:Name="BusyPanel"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsHitTestVisible="False">
+            <ProgressBar IsIndeterminate="True" Width="140" Height="8" />
+            <TextBlock Text="Translating..."
+                       Foreground="#FF3AA0FF"
+                       FontFamily="Consolas"
+                       HorizontalAlignment="Center"
+                       Margin="0,8,0,0" />
+        </StackPanel>
+
+        <!-- Manual trigger alternative to the hotkey's trigger step. -->
+        <Button x:Name="GoButton"
+                Width="34" Height="22"
+                Margin="4,4,22,4"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Content="go"
+                FontFamily="Consolas"
+                Click="GoButton_Click"
+                Cursor="Hand" />
 
         <!-- Close button: mouse-only, top-right corner. -->
         <Button x:Name="CloseButton"

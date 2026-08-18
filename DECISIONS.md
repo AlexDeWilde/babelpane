@@ -78,3 +78,19 @@ quality of the product. Do not paste full conversations.
 - **Team decision:** Accepted.
 - **Reason:** Eliminates the mixed-major-version resolution entirely rather than working around a framework bug; verified by running the app after retargeting — starts cleanly, no exception, process stays alive.
 - **Consequence:** `BabelPane.csproj` now targets `net10.0-windows`. Removed the explicit `System.Drawing.Common` PackageReference — it ships inside the net10.0 desktop runtime and NuGet flagged it as redundant (`NU1510`). The unused .NET 9 SDK install was left in place (harmless, no cleanup needed). `CLAUDE.md` updated accordingly.
+
+### M2 model override: `gemma4-e4b-110k:latest`, not the hf.co tag named in the brief
+
+- **Context:** `PRODUCT_BRIEF.md`'s research-assumptions note names `hf.co/unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL` as the model tried standalone. That exact tag is loaded on the Ollama server with a 131072-token context window.
+- **Claude Code proposal:** Proposed using the brief's named tag directly for M2's `AppConfig.ModelName`.
+- **Team decision:** Rejected — use `gemma4-e4b-110k:latest` instead (same underlying weights per the server's model list, retagged with a 110k context window).
+- **Reason:** The original hf.co tag's context window is unnecessarily large for a single-region OCR+translate call and adds avoidable overhead.
+- **Consequence:** `AppConfig.ModelName` is `gemma4-e4b-110k:latest`. Verified directly against the Ollama server with a synthetic French-text image before wiring it into the app — returned a correct English translation.
+
+### Autofit implementation: computed font size, not Viewbox scaling
+
+- **Context:** First M2 implementation autofit the translated text with a `Viewbox` (`Stretch="Uniform"`) wrapping a `TextBlock` with a fixed `MaxWidth="800"` for word-wrap. Manual test showed the text rendering far smaller than necessary, with empty space left in the pane.
+- **Claude Code proposal:** Diagnosed the cause — `Viewbox` uniform-scales to the wrapped text's natural aspect ratio, which depends on the arbitrary wrap width and rarely matches the pane's actual aspect ratio, so the pane's shorter axis constrains the scale regardless of space available on the other axis. Replaced it with a binary search over `TextBlock.FontSize` (measuring wrapped height at the pane's actual width) so the text fills the container directly, and re-runs the fit on resize.
+- **Team decision:** Accepted after visual confirmation — text now fills the available space at a comfortable reading size.
+- **Reason:** Direct visual defect caught in manual milestone verification, not a hypothetical.
+- **Consequence:** `MainWindow.xaml.cs` has an `AutoFitText()` helper; `OutputContainer.SizeChanged` re-triggers it so resizing the pane after a translation keeps the fit correct. The `[go]` button was also relocated to bottom-right (left of the resize grip) after the same test showed it overlapping the top-left of the translated text.

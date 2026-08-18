@@ -7,7 +7,7 @@ Keep this file short and current.
 - User problem: no fast, private way to translate arbitrary on-screen content (contracts, scans, browser pages, messages) without uploading it to a cloud service.
 - Intended outcome: point a floating overlay at foreign-language text on screen and get a translation rendered in place, entirely offline.
 - Core journey: hotkey opens pane → drag/resize over text → hotkey/`[go]` triggers capture+translate → translated text renders in place → hotkey closes.
-- Current milestone: M1 — runnable shell (tray icon, borderless transparent-center pane, hotkey open/close cycle).
+- Current milestone: M3 — empty/loading/error/invalid-input states (busy indicator and a minimal happy-path/error message already exist from M2; M3 polishes these and adds mid-request hotkey-cancel).
 
 ## Scope
 Required now (M1):
@@ -18,6 +18,8 @@ Required now (M1):
 Non-goals (whole project, see `PRODUCT_BRIEF.md` for the full list):
 - Packaged `.exe` — dev process only.
 - Configurable source language, multi-monitor, layout-matched rendering, history/logging, non-Windows support.
+
+M2 (core journey) shipped with hardcoded config constants in `AppConfig.cs` (endpoint, model, target language, timeout) — the settings window to make these user-configurable is not yet built.
 
 Do not add features outside the current milestone without explaining why they are necessary.
 

@@ -8,21 +8,25 @@ public enum PaneState
 {
     Closed,
     Open,
+    Busy,
     Triggered,
 }
 
 /// <summary>
-/// The floating overlay pane. For M1, "trigger" is a stub: no capture or
-/// translation call happens yet (that lands in M2) — it just advances the
-/// hotkey's 3-state cycle and reports what would happen.
+/// The floating overlay pane. Drives the hotkey's open -> trigger -> close
+/// cycle; "trigger" captures the region under the pane and sends it to the
+/// local Ollama server for combined OCR + translation.
 /// </summary>
 public partial class MainWindow : Window
 {
     public PaneState State { get; private set; } = PaneState.Closed;
 
+    private readonly OllamaClient _ollama = new(AppConfig.OllamaEndpoint, AppConfig.RequestTimeout);
+
     public MainWindow()
     {
         InitializeComponent();
+        OutputContainer.SizeChanged += (_, _) => AutoFitText();
     }
 
     /// <summary>Advances the open -> trigger -> close cycle by one step.</summary>
@@ -31,7 +35,7 @@ public partial class MainWindow : Window
         switch (State)
         {
             case PaneState.Closed:
-                StatusText.Text = "open — press the hotkey to trigger (stub)";
+                ResetForOpen();
                 Visibility = Visibility.Visible;
                 Show();
                 Activate();
@@ -39,8 +43,11 @@ public partial class MainWindow : Window
                 break;
 
             case PaneState.Open:
-                TriggerStub();
-                State = PaneState.Triggered;
+                _ = RunTriggerAsync();
+                break;
+
+            case PaneState.Busy:
+                // Mid-request cancel is a later milestone; ignored for now.
                 break;
 
             case PaneState.Triggered:
@@ -50,11 +57,91 @@ public partial class MainWindow : Window
         }
     }
 
-    private void TriggerStub()
+    private void ResetForOpen()
     {
-        // M2 replaces this with: capture the region under Chrome, call Ollama,
-        // render the translation. For now it only proves the cycle advances.
-        StatusText.Text = "triggered (stub — no capture/translate yet)\npress the hotkey to close";
+        OutputText.Text = string.Empty;
+        ContentBackdrop.Visibility = Visibility.Collapsed;
+        BusyPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private async Task RunTriggerAsync()
+    {
+        State = PaneState.Busy;
+        OutputText.Text = string.Empty;
+        ContentBackdrop.Visibility = Visibility.Visible;
+        BusyPanel.Visibility = Visibility.Visible;
+
+        try
+        {
+            var pngBytes = ScreenCapture.CapturePaneRegion(this);
+            var translation = await _ollama.TranslateImageAsync(pngBytes, AppConfig.ModelName, AppConfig.TargetLanguage);
+            OutputText.Text = string.IsNullOrWhiteSpace(translation) ? "(no text detected)" : translation.Trim();
+        }
+        catch (Exception ex)
+        {
+            OutputText.Text = $"Translation failed: {ex.Message}";
+        }
+        finally
+        {
+            BusyPanel.Visibility = Visibility.Collapsed;
+            State = PaneState.Triggered;
+            AutoFitText();
+        }
+    }
+
+    /// <summary>
+    /// Picks the largest font size (within reason) whose wrapped text still
+    /// fits the output container, so the translation fills the available
+    /// space instead of leaving it mostly empty.
+    /// </summary>
+    private void AutoFitText()
+    {
+        const double minFontSize = 8;
+        const double maxFontSize = 72;
+
+        var width = OutputContainer.ActualWidth;
+        var height = OutputContainer.ActualHeight;
+        if (width <= 0 || height <= 0 || string.IsNullOrEmpty(OutputText.Text))
+        {
+            return;
+        }
+
+        bool Fits(double fontSize)
+        {
+            OutputText.FontSize = fontSize;
+            OutputText.Measure(new System.Windows.Size(width, double.PositiveInfinity));
+            return OutputText.DesiredSize.Height <= height;
+        }
+
+        double low = minFontSize, high = maxFontSize;
+        if (!Fits(low))
+        {
+            OutputText.FontSize = low;
+            return;
+        }
+
+        while (high - low > 0.5)
+        {
+            var mid = (low + high) / 2;
+            if (Fits(mid))
+            {
+                low = mid;
+            }
+            else
+            {
+                high = mid;
+            }
+        }
+
+        OutputText.FontSize = low;
+    }
+
+    private void GoButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (State == PaneState.Open)
+        {
+            _ = RunTriggerAsync();
+        }
     }
 
     private void Chrome_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
