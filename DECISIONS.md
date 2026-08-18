@@ -70,3 +70,11 @@ quality of the product. Do not paste full conversations.
 - **Team decision:** Accepted.
 - **Reason:** Fewest moving parts for the riskiest requirement (excluding the overlay's own window from its own capture); Python/Electron both needed more glue or had known friction on frameless translucent click-through windows.
 - **Consequence:** .NET 9 SDK installed via `winget` (was missing, only a runtime stub was present). Scaffolded `src/BabelPane` (WPF app, net9.0-windows) and `BabelPane.sln`; added `System.Drawing.Common` NuGet package; build verified green. `CLAUDE.md` written with this stack and the real `dotnet` commands.
+
+### Retarget net9.0-windows -> net10.0-windows during M1
+
+- **Context:** M1's tray-icon code (`NotifyIcon`/`ContextMenuStrip`, WinForms interop inside a WPF app) crashed at startup with a `TypeLoadException`: `System.Private.Windows.Core, Version=10.0.0.0` failed to load while the rest of the app ran on the .NET 9 desktop runtime. Root cause: a .NET 10 desktop runtime was already installed on this machine (only its SDK was missing) alongside the newly installed .NET 9 SDK/runtime, and the WPF+WinForms interop assembly resolved from the wrong major version — a genuine side-by-side resolution bug, not fixable by `RollForward` policy tweaks (tried `LatestMinor`, still crashed).
+- **Claude Code proposal:** Install the .NET 10 SDK (matching the runtime already present) and retarget the project to `net10.0-windows` instead of chasing the 9/10 split further.
+- **Team decision:** Accepted.
+- **Reason:** Eliminates the mixed-major-version resolution entirely rather than working around a framework bug; verified by running the app after retargeting — starts cleanly, no exception, process stays alive.
+- **Consequence:** `BabelPane.csproj` now targets `net10.0-windows`. Removed the explicit `System.Drawing.Common` PackageReference — it ships inside the net10.0 desktop runtime and NuGet flagged it as redundant (`NU1510`). The unused .NET 9 SDK install was left in place (harmless, no cleanup needed). `CLAUDE.md` updated accordingly.

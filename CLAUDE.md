@@ -22,14 +22,14 @@ Non-goals (whole project, see `PRODUCT_BRIEF.md` for the full list):
 Do not add features outside the current milestone without explaining why they are necessary.
 
 ## Technical Context
-- Stack: C# / .NET 9 (net9.0-windows), WPF. Chosen over Python/Electron because native APIs cover every "must demonstrate" item (transparent click-through window, tray icon, global hotkey, screen capture) with the fewest third-party dependencies — see `DECISIONS.md`.
-- Architecture: single WPF app project (`src/BabelPane`). `System.Drawing.Common` (NuGet) provides `Graphics.CopyFromScreen` for region capture. `HttpClient` calls a local Ollama server for OCR+translate. Settings/geometry persist to a small JSON file under `%AppData%\BabelPane`.
+- Stack: C# / .NET 10 (net10.0-windows), WPF + WinForms interop (for the tray icon). Chosen over Python/Electron because native APIs cover every "must demonstrate" item (transparent click-through window, tray icon, global hotkey, screen capture) with the fewest third-party dependencies — see `DECISIONS.md`. Targets net10.0 (not net9.0) because a .NET 10 desktop runtime was already present on this machine and mixing SDK/runtime majors caused a real `TypeLoadException` in WinForms' tray-icon code (`System.Private.Windows.Core` resolving from the wrong major version) — see `DECISIONS.md`.
+- Architecture: single WPF app project (`src/BabelPane`). `System.Drawing.Common` (bundled with the net10.0 desktop runtime, no separate package needed) provides `Graphics.CopyFromScreen` for region capture. `HttpClient` calls a local Ollama server for OCR+translate. Settings/geometry persist to a small JSON file under `%AppData%\BabelPane`.
 - Important paths: `src/BabelPane/` (app source), `src/BabelPane/BabelPane.csproj` (project + deps), `BabelPane.sln` (solution).
 - Data: synthetic / seeded only; no real personal documents in the repo.
 - Environment: Windows 11, PowerShell. No `&&` chaining. Paths use `\`. Building/running from Bash needs `dotnet` on PATH (`export PATH="/c/Program Files/dotnet:$PATH"`) since it was just installed this session.
 
 ## Commands
-- Install: `dotnet restore BabelPane.sln`
+- Install: `dotnet restore BabelPane.sln` (requires .NET 10 SDK; also installed .NET 9 SDK this session for the first build attempt — kept, unused by this project)
 - Run: `dotnet run --project src/BabelPane/BabelPane.csproj`
 - Test: *(none yet — no test project created)*
 - Lint or format: `dotnet format BabelPane.sln`
