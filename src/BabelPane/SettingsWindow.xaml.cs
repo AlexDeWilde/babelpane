@@ -13,6 +13,8 @@ public partial class SettingsWindow : Window
         EndpointBox.Text = cfg.OllamaEndpoint;
         ModelBox.Text = cfg.ModelName;
         LanguageBox.Text = cfg.TargetLanguage;
+        LiteralModeRadio.IsChecked = cfg.TranslationMode == TranslationMode.Literal;
+        SummaryModeRadio.IsChecked = cfg.TranslationMode == TranslationMode.Summary;
         TimeoutBox.Text = cfg.TimeoutSeconds.ToString();
         WinCheck.IsChecked = cfg.HotkeyModifiers.HasFlag(HotkeyModifiers.Win);
         CtrlCheck.IsChecked = cfg.HotkeyModifiers.HasFlag(HotkeyModifiers.Control);
@@ -70,6 +72,7 @@ public partial class SettingsWindow : Window
         cfg.OllamaEndpoint = endpoint;
         cfg.ModelName = model;
         cfg.TargetLanguage = language;
+        cfg.TranslationMode = SummaryModeRadio.IsChecked == true ? TranslationMode.Summary : TranslationMode.Literal;
         cfg.TimeoutSeconds = timeoutSeconds;
         cfg.HotkeyModifiers = modifiers;
         cfg.HotkeyKey = (Key)Enum.Parse(typeof(Key), keyText);

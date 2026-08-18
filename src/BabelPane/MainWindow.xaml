@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BabelPane"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="BabelPane"
         Width="420" Height="220"
@@ -12,14 +13,22 @@
         AllowsTransparency="True"
         Background="Transparent"
         ShowInTaskbar="False"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Topmost="True"
         Visibility="Hidden"
         KeyDown="MainWindow_KeyDown">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome ResizeBorderThickness="6"
+                            CaptionHeight="0"
+                            GlassFrameThickness="0"
+                            CornerRadius="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
     <Grid>
         <!-- Border chrome: the only part that is visually opaque and mouse-hittable.
-             Dragging the pane happens from here; the center stays pass-through so the
-             content underneath remains visible while positioning the pane. -->
+             A drag from here repositions the pane; a click (no movement) triggers
+             capture+translate instead (see Chrome_MouseLeftButtonDown). The center
+             stays pass-through so the content underneath remains visible while idle. -->
         <Border x:Name="Chrome"
                 BorderBrush="#FF3AA0FF"
                 BorderThickness="2"
@@ -62,18 +71,9 @@
                        Margin="0,8,0,0" />
         </StackPanel>
 
-        <!-- Manual trigger alternative to the hotkey's trigger step. -->
-        <Button x:Name="GoButton"
-                Width="34" Height="22"
-                Margin="4,4,22,4"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Content="go"
-                FontFamily="Consolas"
-                Click="GoButton_Click"
-                Cursor="Hand" />
-
-        <!-- Close button: mouse-only, top-right corner. -->
+        <!-- Close button: mouse-only, top-right corner. Marked hit-test-visible-in-chrome
+             because it sits within WindowChrome's ResizeBorderThickness, which would
+             otherwise claim clicks there for edge-resize instead of routing them here. -->
         <Button x:Name="CloseButton"
                 Width="22" Height="22"
                 Margin="4"
@@ -82,16 +82,21 @@
                 Content="x"
                 FontFamily="Consolas"
                 Click="CloseButton_Click"
-                Cursor="Hand" />
+                Cursor="Hand"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True" />
 
-        <!-- Resize grip: mouse-only, bottom-right corner. -->
-        <Thumb x:Name="ResizeGrip"
-               Width="14" Height="14"
-               Margin="4"
-               HorizontalAlignment="Right"
-               VerticalAlignment="Bottom"
-               Cursor="SizeNWSE"
-               DragDelta="ResizeGrip_DragDelta"
-               Background="#FF3AA0FF" />
+        <!-- Copy-to-clipboard button: mouse-only, bottom-right corner. Visible
+             only once a translation has successfully rendered (Triggered state). -->
+        <Button x:Name="CopyButton"
+                Width="52" Height="22"
+                Margin="4"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Content="Copy"
+                FontFamily="Consolas"
+                Click="CopyButton_Click"
+                Cursor="Hand"
+                Visibility="Collapsed"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True" />
     </Grid>
 </Window>

@@ -34,7 +34,8 @@ dotnet restore BabelPane.sln
 On first run, open Settings from the tray icon and set:
 - **Ollama endpoint URL** — defaults to `http://localhost:11434`
 - **Model name** — the vision-capable model you pulled in Ollama
-- **Target language**, **request timeout**, and the **global hotkey** (default `Win+Alt+X`)
+- **Target language**, **translation mode** (Literal, the default, or Summary),
+  **request timeout**, and the **global hotkey** (default `Win+Alt+X`)
 
 ## Run
 
@@ -48,19 +49,22 @@ BabelPane starts in the system tray — no window opens until you use it.
 
 1. Press the global hotkey (`Win+Alt+X` by default). The pane opens, empty, at
    its last saved size and position.
-2. Drag the pane's border to reposition it, and its bottom-right corner to
-   resize it, over some foreign-language text on screen.
-3. Press the hotkey again (or click `[go]` in the pane's corner). The region
-   under the pane is captured in memory and sent to your local Ollama server
-   for combined OCR + translation. A busy indicator shows while waiting.
-   Pressing the hotkey again while a request is in flight cancels it and
-   closes the pane immediately.
+2. Drag the pane to reposition it — including onto a different monitor, if
+   you have more than one — and resize it from any edge or corner, just like
+   a normal window, over some foreign-language text on screen.
+3. Press the hotkey again (or click anywhere in the pane without dragging
+   it). The region under the pane is captured in memory and sent to your
+   local Ollama server for combined OCR + translation. A busy indicator
+   shows while waiting. Pressing the hotkey again while a request is in
+   flight cancels it and closes the pane immediately.
 4. The translated text appears in place, autofit to the available space.
-5. Press the hotkey a third time to close the pane. Its size and position are
-   saved; its content is not.
+5. Press the hotkey a third time to close the pane, or click the `[Copy]`
+   button (bottom-right, visible once the translation renders) to copy the
+   text to the clipboard, see a brief "Copied" confirmation, and close in one
+   step. Either way, its size and position are saved; its content is not.
 6. **Error case:** if Ollama is unreachable or times out, the pane shows a
    clear inline message and stays open at the same position/size so you can
-   retry with `[go]` or the hotkey — no need to reposition.
+   retry by clicking the pane or pressing the hotkey — no need to reposition.
 
 Press `Escape` at any time to close the pane immediately.
 
@@ -75,19 +79,26 @@ bodies, a placeholder endpoint URL) — no real settings file or network call.
 
 ```powershell
 dotnet build BabelPane.sln   # build succeeded, 0 warnings, 0 errors
-dotnet test BabelPane.sln    # 7/7 tests passed
+dotnet test BabelPane.sln    # 14/14 tests passed
 dotnet format BabelPane.sln  # ran clean; fixed one spacing nit in AssemblyInfo.cs
 ```
 
 All three commands were run and verified passing in this session. Test coverage is
 limited to logic that doesn't require the GUI or a live network call: `AppConfig`
-JSON round-tripping, and parsing/error-handling of Ollama's response JSON.
-Hotkey registration, screen capture, and drag/resize are GUI/OS-interop code,
-exercised manually (see above) rather than by automated tests.
+JSON round-tripping, parsing/error-handling of Ollama's response JSON, the
+pure geometry-recovery logic used for multi-monitor fallback, and the two
+translation-mode prompts' wording. Hotkey registration, screen capture, and
+drag/resize are GUI/OS-interop code, exercised manually (see above) rather
+than by automated tests. Actual translation *quality* (literal vs. summary,
+fluency) can only be judged by a human against the live model — see the
+Known Limitations note on that below.
 
 ## Known limitations
 
-- Single (primary) monitor only — no multi-monitor support.
+- Multi-monitor is supported (drag the pane to any connected monitor), but
+  only verified with monitors at the same DPI scaling — behavior on a mixed-DPI
+  setup (e.g. a laptop panel at 150% next to an external display at 100%) is
+  unverified.
 - Source language is auto-detected by the model; only the target language is
   configurable.
 - Translated text is autofit and wrapped, not matched to the original layout
@@ -98,3 +109,6 @@ exercised manually (see above) rather than by automated tests.
   thread on every trigger; not perceptible in normal use (see `DECISIONS.md`).
 - Translation quality depends entirely on the local model you configure —
   BabelPane does no post-processing or validation of the model's output.
+  **Literal mode**'s prompt is tuned against one real vision model's specific
+  failure modes (stilted word-for-word phrasing, bracketed hedging); a
+  different model may need different wording to behave the same way.

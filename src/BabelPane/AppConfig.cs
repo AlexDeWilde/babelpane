@@ -14,6 +14,7 @@ public sealed class AppConfig
     public string OllamaEndpoint { get; set; } = "http://localhost:11434";
     public string ModelName { get; set; } = "gemma4-e4b-110k:latest";
     public string TargetLanguage { get; set; } = "English";
+    public TranslationMode TranslationMode { get; set; } = TranslationMode.Literal;
     public int TimeoutSeconds { get; set; } = 60;
     public HotkeyModifiers HotkeyModifiers { get; set; } = HotkeyModifiers.Win | HotkeyModifiers.Alt;
     public Key HotkeyKey { get; set; } = Key.X;

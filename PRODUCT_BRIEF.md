@@ -19,6 +19,7 @@
 **Assumptions that still require research:**
 - The local model (`hf.co/unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL` via Ollama) has been tried standalone for combined OCR + translation and worked; whether that quality holds up once wired into this app's actual capture pipeline, and for dense or legally consequential text specifically, is still to be seen.
 - Autofit text (font size shrunk to the available space, fixed line spacing) reads as usable rather than cramped or illegible for dense document content.
+- Multi-monitor support was verified only where all connected monitors share the same DPI scaling (both monitors on the dev machine run at 100%); behavior with monitors at different scaling factors (e.g. a laptop panel at 150% next to an external display at 100%) is unverified.
 
 ## Core Journey
 
@@ -26,10 +27,10 @@
 
 **Key user actions:**
 1. Press the global hotkey (default `Win+Alt+X`, changeable in settings) — the pane opens, empty, at its last saved size and position.
-2. Drag and resize the borderless, transparent-center pane over the foreign-language text, on any on-screen source (PDF, scanned image, browser, app, social media) on the primary monitor.
-3. Press the same hotkey again (or click the `[go]` button in the pane's corner) — the region under the pane is captured in memory and sent to the local Ollama model for combined OCR and translation. The captured image is never written to disk and is discarded once the request completes. A busy indicator shows while waiting. Pressing the hotkey again while the request is still in flight cancels it and closes the pane immediately.
+2. Drag and resize the borderless, transparent-center pane — from any edge or corner, like any normal window — over the foreign-language text, on any on-screen source (PDF, scanned image, browser, app, social media), on any monitor connected to the system.
+3. Press the same hotkey again (or click anywhere in the pane without dragging it) — the region under the pane is captured in memory and sent to the local Ollama model for combined OCR and translation. The captured image is never written to disk and is discarded once the request completes. A busy indicator shows while waiting. Pressing the hotkey again while the request is still in flight cancels it and closes the pane immediately.
 4. The translated text appears inside the pane, in place, autofit to the available space (font size scaled down as needed, fixed line spacing), wrapped rather than matched to the original layout.
-5. Press the hotkey a third time to close the pane. Its size and position are saved; its content is not.
+5. Press the hotkey a third time to close the pane, or click the `[Copy]` button that appears once a translation is showing — this copies the translated text to the clipboard, flashes a brief "Copied" confirmation, and closes the pane in one step. Either way, its size and position are saved; its content is not.
 
 **Successful outcome:** I can read a trustworthy-enough translation of sensitive on-screen text, in place, without the content or a captured image of it ever leaving memory or touching disk.
 
@@ -40,22 +41,24 @@
 ### Must Demonstrate
 
 - Tray icon with a menu: open widget pane / open settings.
-- Borderless pane with a transparent center (only a contour visible), movable, resizable, and closeable with the mouse.
+- Borderless pane with a transparent center (only a contour visible), movable, resizable from any edge or corner like a normal window, and closeable with the mouse.
 - Global hotkey (default `Win+Alt+X`, changeable in settings) driving a 3-state cycle: open → trigger capture+translate → close. A new keypress while a request is in flight cancels it and closes the pane.
-- `[go]` button in the pane's corner as a manual trigger alternative to the hotkey's trigger step.
-- Pane size and position persisted across app restarts; pane always opens empty.
-- Screen-region capture of whatever is beneath the pane, on the primary monitor. The captured image exists only in memory for the duration of the request and is never written to disk.
+- Clicking anywhere in the pane without dragging it is a manual trigger alternative to the hotkey's trigger step.
+- Pane size and position persisted across app restarts; pane always opens empty. If the saved position falls outside every currently connected monitor (e.g. an external monitor was unplugged), the pane falls back to a centered, reachable position on the primary monitor instead of opening off-screen.
+- Works across all monitors connected to the system — the pane can be dragged to and captures/translates correctly on any of them, not just the primary.
+- Screen-region capture of whatever is beneath the pane, on any connected monitor. The captured image exists only in memory for the duration of the request and is never written to disk.
 - Call to a local Ollama server (endpoint and model name both configurable) for combined OCR + translation.
-- Settings window exposing: Ollama endpoint URL, model name, target language, request timeout, and the global hotkey.
+- Settings window exposing: Ollama endpoint URL, model name, target language, translation mode (literal / summary), request timeout, and the global hotkey.
 - Visible busy/activity indicator while waiting on the model.
 - Inline, recoverable error/timeout state in the pane.
 - Translated text rendered in place, autofit to the available space (font size scaled to fit, fixed line spacing), wrapped rather than layout-matched.
+- Two translation modes, selectable in settings: **Literal translation** (default) — a complete, sentence-by-sentence, faithful translation in fluent target-language phrasing, with deterministic output (temperature 0); and **Summary interpretation** — a more freely interpreted rendering.
+- `[Copy]` button, visible only once a translation is showing, that copies the translated text to the clipboard, confirms with a brief "Copied" message, and closes the pane.
 
 ### Explicit Non-Goals
 
 - Packaged standalone `.exe` — runs as a script/dev process for this prototype.
 - Configurable source language — auto-detected by the model, only the target language is a setting.
-- Multi-monitor support — single (primary) monitor only for this prototype.
 - Matching the original text's line breaks/layout — autofit + plain wrap only.
 - Side-by-side original/translated view.
 - Translation history or logging.
@@ -66,7 +69,7 @@
 | Criterion | How we will verify it |
 |---|---|
 | Tray icon opens pane and settings | Click the tray icon; confirm both menu items appear and each opens the right window |
-| Pane is borderless, transparent-center, mouse-movable/resizable/closeable | Manually drag, resize from a corner, and close the pane; confirm no window chrome and that content underneath is visible through the center |
+| Pane is borderless, transparent-center, mouse-movable/resizable/closeable | Manually drag, resize from each edge and corner, and close the pane; confirm no window chrome and that content underneath is visible through the center |
 | Hotkey 3-state cycle works | From a closed state, press the configured hotkey three times in a row over sample foreign text; confirm open → translate → close behavior each time |
 | Mid-request cancel works | Trigger a translation, press the hotkey again before it completes; confirm the request is abandoned and the pane closes immediately |
 | Captured image is never persisted to disk | Watch the filesystem (temp folders included) during and after a translation; confirm no image file is written at any point |
@@ -75,12 +78,17 @@
 | Autofit rendering is legible | Trigger a translation on a dense block of text; confirm the result is scaled to fit the pane, fixed line spacing, readable rather than cramped |
 | Timeout/error handling is visible, not silent | Stop Ollama or block the connection, trigger a translation; confirm the busy indicator appears, then a clear in-pane error/timeout message, with geometry intact |
 | Settings changes take effect | Change endpoint, model, target language, hotkey, and timeout in settings; confirm the next translation uses the updated values |
+| Copy-to-clipboard works | Trigger a translation, click `[Copy]`; confirm the pane closes, a brief "Copied" confirmation appears, and the exact translated text is on the clipboard |
+| Works on any connected monitor | Drag the pane onto a secondary monitor, trigger a translation over real text there; confirm the captured/rendered content matches that monitor. Save geometry there, relaunch, confirm it reopens in the same spot |
+| Recovers from a changed monitor arrangement | Set saved pane geometry to coordinates outside every currently connected monitor, relaunch; confirm the pane falls back to a centered, reachable position instead of opening off-screen |
+| Literal mode is faithful, fluent, and clean | Trigger a translation in Literal mode (the default) on real multi-sentence foreign text; confirm every sentence is translated completely (nothing summarized/omitted), reads as natural fluent phrasing (not word-for-word source order), and contains no bracketed alternates or hedging |
+| Summary mode is selectable and different | Switch to Summary interpretation in settings, retranslate the same text; confirm the output is noticeably more interpretive than Literal mode's output on the same input |
 
 ## Constraints and Risks
 
 - Data and privacy: All OCR and translation happen locally against a LAN Ollama server (`192.168.68.52:11434`); no screenshot or extracted text is sent to any third-party or cloud service. The captured screen region is held in memory only and is never written to disk. This is the core value proposition, not an add-on — sensitive personal documents must never leave the local network or persist anywhere after translation.
 - Accessibility: Primary interactions (move, resize, close the pane) are mouse-driven by design, consistent with a floating widget. The hotkey gives a keyboard path for open/trigger/close. Settings window keyboard-only operation is not a goal for this prototype.
-- Technical constraints: Windows 11 only; requires a reachable Ollama server running a vision-capable model; primary monitor only for this prototype (multi-monitor is a known limitation, not attempted); the overlay must capture actual on-screen content beneath it without capturing its own transparent window.
+- Technical constraints: Windows 11 only; requires a reachable Ollama server running a vision-capable model; works across all connected monitors, verified only where they share the same DPI scaling (mixed-DPI setups unverified — see Assumptions above); the overlay must capture actual on-screen content beneath it without capturing its own transparent window.
 - Product or trust risks: OCR/translation quality from a local quantized model is unverified for dense or legally consequential text. A mistranslated clause in a contract or insurance document has real consequences, so results should be treated as a reading aid, not an authoritative translation, even though no on-screen disclaimer is required at this prototype stage.
 
 ## Capstone Potential

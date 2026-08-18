@@ -14,6 +14,7 @@ public class AppConfigTests
             OllamaEndpoint = "http://example.test:11434",
             ModelName = "test-model:latest",
             TargetLanguage = "French",
+            TranslationMode = TranslationMode.Summary,
             TimeoutSeconds = 42,
             HotkeyModifiers = HotkeyModifiers.Control | HotkeyModifiers.Shift,
             HotkeyKey = Key.T,
@@ -30,6 +31,7 @@ public class AppConfigTests
         Assert.Equal(original.OllamaEndpoint, roundTripped!.OllamaEndpoint);
         Assert.Equal(original.ModelName, roundTripped.ModelName);
         Assert.Equal(original.TargetLanguage, roundTripped.TargetLanguage);
+        Assert.Equal(original.TranslationMode, roundTripped.TranslationMode);
         Assert.Equal(original.TimeoutSeconds, roundTripped.TimeoutSeconds);
         Assert.Equal(original.HotkeyModifiers, roundTripped.HotkeyModifiers);
         Assert.Equal(original.HotkeyKey, roundTripped.HotkeyKey);
@@ -37,6 +39,12 @@ public class AppConfigTests
         Assert.Equal(original.PaneTop, roundTripped.PaneTop);
         Assert.Equal(original.PaneWidth, roundTripped.PaneWidth);
         Assert.Equal(original.PaneHeight, roundTripped.PaneHeight);
+    }
+
+    [Fact]
+    public void Default_TranslationMode_IsLiteral()
+    {
+        Assert.Equal(TranslationMode.Literal, new AppConfig().TranslationMode);
     }
 
     [Fact]

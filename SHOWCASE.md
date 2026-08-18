@@ -21,11 +21,11 @@ to the core value being proven (see `PRODUCT_BRIEF.md` non-goals).
 
 ## Core Journey
 
-Open (`Win+Alt+X`) → drag/resize over foreign text → trigger (hotkey or
-`[go]`) → busy indicator → translated text renders in place, autofit → close
-(hotkey or `Escape`). A forced-unreachable-endpoint test confirmed the
-error/retry branch: pane stays open at the same position/size with a clear
-message and retry path.
+Open (`Win+Alt+X`) → drag/resize (any edge/corner) over foreign text →
+trigger (hotkey or a click on the pane) → busy indicator → translated text
+renders in place, autofit → close (hotkey or `Escape`). A
+forced-unreachable-endpoint test confirmed the error/retry branch: pane stays
+open at the same position/size with a clear message and retry path.
 
 ![Pane open and empty](assets/start-state.png)
 ![Translated text rendered in the pane](assets/success-state.png)
@@ -36,8 +36,9 @@ message and retry path.
 
 - **Acceptance criteria checked:** All rows in `PRODUCT_BRIEF.md`'s Acceptance
   Evidence table were exercised live — tray icon menu, borderless
-  transparent-center pane (drag/resize/close by mouse), 3-state hotkey cycle,
-  `[go]` button, pane geometry persisted across restarts, in-memory capture,
+  transparent-center pane (drag/resize from any edge or corner, close by
+  mouse), 3-state hotkey cycle, click-to-trigger, pane geometry persisted
+  across restarts, in-memory capture,
   settings window (endpoint/model/language/timeout/hotkey), busy indicator,
   inline retryable error state, autofit rendering.
 - **Feedback or observations:** The first live walkthrough attempt actually
@@ -61,9 +62,10 @@ message and retry path.
   launched to the tray with no startup errors, twice, across two separate
   runs).
 - **Tests, lint, type checks, or build commands completed:** `dotnet build
-  BabelPane.sln` — 0 warnings, 0 errors. `dotnet test BabelPane.sln` — 7/7
+  BabelPane.sln` — 0 warnings, 0 errors. `dotnet test BabelPane.sln` — 14/14
   passed (`AppConfig` JSON round-trip incl. null geometry; Ollama response
-  parsing incl. malformed-JSON and missing-field cases). `dotnet format
+  parsing incl. malformed-JSON and missing-field cases; multi-monitor
+  geometry-recovery logic; translation-mode prompt wording). `dotnet format
   BabelPane.sln` — ran clean, fixed one spacing nit in the WPF-scaffolded
   `AssemblyInfo.cs`.
 - **Not verified:** Hotkey registration, screen capture, and
@@ -95,14 +97,67 @@ have — worth deciding deliberately, not defaulting into.
 
 ## Known Limitations
 
-- Single (primary) monitor only.
+- Multi-monitor supported; only verified with monitors at the same DPI
+  scaling — mixed-DPI setups unverified.
 - Source language auto-detected; only the target language is configurable.
 - Autofit + wrap rendering, not layout-matched to the source.
 - No translation history, logging, or side-by-side view.
 - Dev-process only, no packaged `.exe`.
 - ~120ms synchronous UI-thread pause during every capture (see `DECISIONS.md`).
 - No validation of translation quality/accuracy — entirely dependent on the
-  configured local model.
+  configured local model. Literal mode's prompt is tuned to one model's
+  specific failure modes and may need retuning for a different model.
+
+## Post-Deliverable Addition: Multi-Monitor Support
+
+After the showcase above was packaged, the user picked up multi-monitor
+support (previously an explicit non-goal) as the first item from their
+backlog. `ApplicationHighDpiMode=PerMonitorV2` plus a new pure
+`ScreenGeometry.EnsureVisible` helper (unit-tested) now let the pane work on
+any connected monitor, with a fallback to a centered position if saved
+geometry falls outside every currently connected monitor. Verified live:
+dragging the pane onto a real secondary monitor and translating there
+captured the correct content; geometry saved there reopened correctly after a
+relaunch; a deliberately off-screen saved position recovered to a centered,
+reachable spot. See `DECISIONS.md` for the full record, including the one
+caveat carried forward — mixed-DPI-per-monitor setups remain unverified on
+available hardware.
+
+## Post-Deliverable Addition: Click-to-Trigger, Native Resize, Copy to Clipboard
+
+Three more backlog items picked up after multi-monitor support: the `[go]`
+button was removed in favor of clicking anywhere in the pane (a click, not a
+drag, triggers capture+translate — detected by comparing window position
+before/after the blocking `DragMove()` call); the single visible resize grip
+was replaced by `System.Windows.Shell.WindowChrome`, giving native edge/corner
+resize with OS cursors and no visible grip at all; and a `[Copy]` button
+appears once a translation renders, copying the text to the clipboard,
+closing the pane immediately, then showing a brief "Copied" confirmation in a
+separate small window positioned where the pane was (an in-pane flash was
+tried first but was too hard to read before the pane closed — moved to
+after closing instead, per user feedback). All verified live. See
+`DECISIONS.md` for the full record, including one still-open item: the two
+`assets/*.png` screenshots predate this and the multi-monitor work and are
+stale, pending a retake.
+
+## Post-Deliverable Addition: Literal vs. Summary Translation Mode
+
+The user noticed the model was producing an interpreted summary rather than
+a faithful translation, despite the existing prompt already asking it to
+"translate all the text" — a real gap between instruction and observed model
+behavior. Added a settings toggle (`Literal translation`, the new default, or
+`Summary interpretation`, today's original behavior, unchanged) backing two
+different prompts plus `temperature=0` for Literal mode only. Getting the
+Literal prompt right took two live-tested iterations: the first version
+("literally," "sentence by sentence") produced stilted, grammatically broken
+English that mirrored the source German's word order; rewritten to
+explicitly require natural, fluent target-language phrasing while still
+translating every sentence completely (nothing summarized or omitted). A
+second issue then surfaced — the model bracketing hedged word choices, e.g.
+`[held]`, in otherwise-correct output — fixed with an explicit "no bracketed
+alternates, no hedging" instruction, added to both modes' prompts since it's
+an output-cleanliness concern rather than a literal-vs-summary one. Confirmed
+clean on retest. See `DECISIONS.md` for the full iteration record.
 
 ## Bridge to the Capstone
 
@@ -116,10 +171,10 @@ not just the synthetic/casual content tested here; whether autofit reads as
 usable rather than cramped on genuinely long documents.
 
 **Data, architecture, testing, accessibility, security, or governance work
-needed:** Multi-monitor-aware capture architecture; a packaging/distribution
-pipeline; an accessibility audit beyond the one keyboard affordance added
-this session (`Escape` to close); automated UI/interop testing if this moves
-past prototype stage.
+needed:** Validation on a real mixed-DPI multi-monitor setup; a
+packaging/distribution pipeline; an accessibility audit beyond the one
+keyboard affordance added this session (`Escape` to close); automated
+UI/interop testing if this moves past prototype stage.
 
 **Recommended next product experiment:** A short usability test with one real
 person translating a real (but non-sensitive) foreign-language document

@@ -23,6 +23,19 @@
         <Label Content="Target language" Padding="0" Margin="0,12,0,0" />
         <TextBox x:Name="LanguageBox" Margin="0,4,0,0" />
 
+        <Label Content="Translation mode" Padding="0" Margin="0,12,0,0" />
+        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <RadioButton x:Name="LiteralModeRadio"
+                         Content="Literal translation"
+                         GroupName="TranslationMode"
+                         Margin="0,0,16,0"
+                         VerticalAlignment="Center" />
+            <RadioButton x:Name="SummaryModeRadio"
+                         Content="Summary interpretation"
+                         GroupName="TranslationMode"
+                         VerticalAlignment="Center" />
+        </StackPanel>
+
         <Label Content="Request timeout (seconds)" Padding="0" Margin="0,12,0,0" />
         <TextBox x:Name="TimeoutBox" Margin="0,4,0,0" />
 

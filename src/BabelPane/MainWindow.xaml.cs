@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace BabelPane;
@@ -33,11 +32,24 @@ public partial class MainWindow : Window
         if (cfg.PaneLeft is double left && cfg.PaneTop is double top &&
             cfg.PaneWidth is double w && cfg.PaneHeight is double h)
         {
-            Left = left;
-            Top = top;
-            Width = w;
-            Height = h;
+            var visible = ScreenGeometry.EnsureVisible(
+                new Rect(left, top, w, h), CurrentMonitorBounds(), PrimaryWorkingArea());
+            Left = visible.Left;
+            Top = visible.Top;
+            Width = visible.Width;
+            Height = visible.Height;
         }
+    }
+
+    private static List<Rect> CurrentMonitorBounds() =>
+        System.Windows.Forms.Screen.AllScreens
+            .Select(s => new Rect(s.Bounds.X, s.Bounds.Y, s.Bounds.Width, s.Bounds.Height))
+            .ToList();
+
+    private static Rect PrimaryWorkingArea()
+    {
+        var wa = System.Windows.Forms.Screen.PrimaryScreen!.WorkingArea;
+        return new Rect(wa.X, wa.Y, wa.Width, wa.Height);
     }
 
     private static OllamaClient BuildOllamaClient() =>
@@ -83,6 +95,7 @@ public partial class MainWindow : Window
         OutputText.Text = string.Empty;
         ContentBackdrop.Visibility = Visibility.Collapsed;
         BusyPanel.Visibility = Visibility.Collapsed;
+        CopyButton.Visibility = Visibility.Collapsed;
     }
 
     private async Task RunTriggerAsync()
@@ -97,20 +110,22 @@ public partial class MainWindow : Window
         {
             var pngBytes = ScreenCapture.CapturePaneRegion(this);
             var translation = await _ollama.TranslateImageAsync(
-                pngBytes, AppConfig.Current.ModelName, AppConfig.Current.TargetLanguage, _cts.Token);
+                pngBytes, AppConfig.Current.ModelName, AppConfig.Current.TargetLanguage,
+                AppConfig.Current.TranslationMode, _cts.Token);
 
             var trimmed = translation.Trim();
             if (string.IsNullOrWhiteSpace(trimmed) ||
                 trimmed.Contains(OllamaClient.NoTextSentinel, StringComparison.OrdinalIgnoreCase))
             {
                 // Grouped with the failure state per the brief: stays open, retryable.
-                OutputText.Text = "No text detected here. Reposition the pane, then press the hotkey or [go] to retry.";
+                OutputText.Text = "No text detected here. Reposition the pane, then press the hotkey or click the pane to retry.";
                 State = PaneState.Open;
             }
             else
             {
                 OutputText.Text = trimmed;
                 State = PaneState.Triggered;
+                CopyButton.Visibility = Visibility.Visible;
             }
         }
         catch (OperationCanceledException)
@@ -120,7 +135,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            OutputText.Text = $"Translation failed: {ex.Message}\nPress the hotkey or [go] to retry.";
+            OutputText.Text = $"Translation failed: {ex.Message}\nPress the hotkey or click the pane to retry.";
             State = PaneState.Open;
         }
         finally
@@ -179,34 +194,49 @@ public partial class MainWindow : Window
         OutputText.FontSize = low;
     }
 
-    private void GoButton_Click(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// A drag repositions the pane (DragMove blocks until mouse-up, so comparing
+    /// position before/after tells us whether one actually happened); a click with
+    /// no movement triggers capture+translate instead, replacing the old [go] button.
+    /// </summary>
+    private void Chrome_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (State == PaneState.Open)
+        if (e.ButtonState != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        var (startLeft, startTop) = (Left, Top);
+        DragMove();
+
+        var moved = Math.Abs(Left - startLeft) > 1.0 || Math.Abs(Top - startTop) > 1.0;
+        if (!moved && State == PaneState.Open)
         {
             _ = RunTriggerAsync();
         }
-    }
-
-    private void Chrome_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (e.ButtonState == MouseButtonState.Pressed)
-        {
-            DragMove();
-        }
-    }
-
-    private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e)
-    {
-        var newWidth = Width + e.HorizontalChange;
-        var newHeight = Height + e.VerticalChange;
-        if (newWidth >= MinWidth) Width = newWidth;
-        if (newHeight >= MinHeight) Height = newHeight;
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Hide();
         State = PaneState.Closed;
+    }
+
+    /// <summary>Copies the translated text, closes the pane the same way the
+    /// close button does, then shows a brief confirmation where the pane was
+    /// — a flash inside the small pane itself, right before closing, was too
+    /// hard to read.</summary>
+    private void CopyButton_Click(object sender, RoutedEventArgs e)
+    {
+        System.Windows.Clipboard.SetText(OutputText.Text);
+
+        var centerX = Left + Width / 2;
+        var centerY = Top + Height / 2;
+
+        Hide();
+        State = PaneState.Closed;
+
+        new CopiedToast(centerX, centerY).Show();
     }
 
     private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)

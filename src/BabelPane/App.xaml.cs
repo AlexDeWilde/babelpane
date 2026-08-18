@@ -53,7 +53,7 @@ public partial class App : Application
 
         var icon = new NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = TrayIconFactory.CreateChiliIcon(),
             Text = "BabelPane",
             Visible = true,
             ContextMenuStrip = menu,

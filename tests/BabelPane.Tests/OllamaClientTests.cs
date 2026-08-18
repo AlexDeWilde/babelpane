@@ -51,4 +51,31 @@ public class OllamaClientTests
 
         Assert.Equal("Ollama returned an unexpected response format.", ex.Message);
     }
+
+    [Fact]
+    public void BuildPrompt_Literal_InstructsCompleteFluentNoSummary()
+    {
+        var prompt = OllamaClient.BuildPrompt(TranslationMode.Literal, "French");
+
+        Assert.Contains("sentence by sentence", prompt);
+        Assert.Contains("do not summarize", prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("opinion", prompt);
+        Assert.Contains("fluent", prompt);
+        Assert.Contains("word-for-word", prompt);
+        Assert.Contains("bracket", prompt);
+        Assert.Contains("French", prompt);
+        Assert.Contains(OllamaClient.NoTextSentinel, prompt);
+    }
+
+    [Fact]
+    public void BuildPrompt_Summary_DoesNotMentionSentenceBySentence()
+    {
+        var prompt = OllamaClient.BuildPrompt(TranslationMode.Summary, "French");
+
+        Assert.DoesNotContain("sentence by sentence", prompt);
+        Assert.DoesNotContain("word-for-word", prompt);
+        Assert.Contains("bracket", prompt);
+        Assert.Contains("French", prompt);
+        Assert.Contains(OllamaClient.NoTextSentinel, prompt);
+    }
 }
