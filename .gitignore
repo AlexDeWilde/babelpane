@@ -9,3 +9,9 @@ build/
 __pycache__/
 .venv/
 .claude/settings.local.json
+
+# .NET
+bin/
+obj/
+*.user
+.vs/

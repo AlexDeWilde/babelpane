@@ -62,3 +62,11 @@ quality of the product. Do not paste full conversations.
 - **Team decision:** Drop layout-matching. Autofit only — font size scaled down to the available space, fixed line spacing (1), plain wrapping. No attempt to reproduce the original text's line breaks.
 - **Reason:** Simpler to build and verify; the value is a readable translation in place, not a pixel-faithful reproduction of the source layout.
 - **Consequence:** Removed "approximated line breaks" language from `PRODUCT_BRIEF.md`; replaced with an autofit rendering requirement and a matching acceptance-evidence check.
+
+### Stack: C# / .NET 9 WPF over Python or Electron
+
+- **Context:** Every "must demonstrate" item is deeply OS-integrated — tray icon, borderless transparent-center click-through overlay that must not capture itself, global hotkey, in-memory screen-region capture, local HTTP call to Ollama, and persisted settings/geometry.
+- **Claude Code proposal:** Compared C#/.NET WPF, Python (PyQt/PySide + pystray + mss + keyboard), and Electron. Recommended WPF because each requirement maps to a first-party Windows API (`AllowsTransparency`, `RegisterHotKey`, `NotifyIcon`, `Graphics.CopyFromScreen`) rather than a third-party binding, with only one added dependency (`System.Drawing.Common`).
+- **Team decision:** Accepted.
+- **Reason:** Fewest moving parts for the riskiest requirement (excluding the overlay's own window from its own capture); Python/Electron both needed more glue or had known friction on frameless translucent click-through windows.
+- **Consequence:** .NET 9 SDK installed via `winget` (was missing, only a runtime stub was present). Scaffolded `src/BabelPane` (WPF app, net9.0-windows) and `BabelPane.sln`; added `System.Drawing.Common` NuGet package; build verified green. `CLAUDE.md` written with this stack and the real `dotnet` commands.
