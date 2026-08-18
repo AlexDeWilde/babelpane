@@ -110,3 +110,11 @@ quality of the product. Do not paste full conversations.
 - **Team decision:** Accepted — build now.
 - **Reason:** Both items are explicitly required by the brief's Must Demonstrate list and tested rows in its Acceptance Evidence table; M4 is meant to validate a feature-complete build against the brief, not to discover missing features.
 - **Consequence:** `AppConfig` became a mutable, persisted settings class (`%AppData%\BabelPane\settings.json`) instead of hardcoded constants; new `SettingsWindow`; pane geometry is saved on app exit (both explicit tray-Exit and `OnExit`) and restored on the next launch. Verified: settings changes (target language, hotkey) took effect immediately, and geometry (position + size) was confirmed identical after a real exit-and-relaunch cycle.
+
+### Phase 4 critical review finding: synchronous 120ms UI-thread block during capture — left as-is
+
+- **Context:** Phase 4's critical review flagged that `ScreenCapture.CapturePaneRegion`'s `Thread.Sleep(120)` (a wait for the compositor to redraw the region after hiding the pane) runs synchronously on the UI thread on every trigger, briefly freezing the app — e.g. a hotkey-cancel landing in that exact window can't be processed.
+- **Claude Code proposal:** Rated it low severity — the freeze is short, happens while the pane is already hidden for its own capture, and isn't perceptible in normal use. Suggested moving the capture off the UI thread only if it ever proves material.
+- **Team decision:** Leave as-is; documented as a known limitation rather than fixed now.
+- **Reason:** Immaterial in practice at this scale; not worth the added complexity of marshalling the capture off the UI thread for a demo-scale prototype.
+- **Consequence:** No code change. Revisit if the delay ever grows (e.g. multi-monitor/DPI handling) or cancel-during-capture responsiveness becomes a real complaint.

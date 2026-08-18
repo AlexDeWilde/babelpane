@@ -57,7 +57,14 @@ public sealed class OllamaClient
     /// <summary>Extracts the "response" field from an Ollama /api/generate reply body.</summary>
     public static string ExtractResponseText(string responseBody)
     {
-        using var doc = JsonDocument.Parse(responseBody);
-        return doc.RootElement.GetProperty("response").GetString() ?? string.Empty;
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            return doc.RootElement.GetProperty("response").GetString() ?? string.Empty;
+        }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            throw new InvalidOperationException("Ollama returned an unexpected response format.", ex);
+        }
     }
 }

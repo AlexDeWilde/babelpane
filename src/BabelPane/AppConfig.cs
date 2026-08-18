@@ -11,7 +11,7 @@ namespace BabelPane;
 /// </summary>
 public sealed class AppConfig
 {
-    public string OllamaEndpoint { get; set; } = "http://192.168.68.52:11434";
+    public string OllamaEndpoint { get; set; } = "http://localhost:11434";
     public string ModelName { get; set; } = "gemma4-e4b-110k:latest";
     public string TargetLanguage { get; set; } = "English";
     public int TimeoutSeconds { get; set; } = 60;

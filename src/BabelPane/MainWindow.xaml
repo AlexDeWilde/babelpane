@@ -14,7 +14,8 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         Topmost="True"
-        Visibility="Hidden">
+        Visibility="Hidden"
+        KeyDown="MainWindow_KeyDown">
     <Grid>
         <!-- Border chrome: the only part that is visually opaque and mouse-hittable.
              Dragging the pane happens from here; the center stays pass-through so the

@@ -208,4 +208,12 @@ public partial class MainWindow : Window
         Hide();
         State = PaneState.Closed;
     }
+
+    private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            CloseButton_Click(sender, e);
+        }
+    }
 }

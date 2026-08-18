@@ -33,4 +33,22 @@ public class OllamaClientTests
 
         Assert.Equal("Line one\n\nLine two", result);
     }
+
+    [Fact]
+    public void ExtractResponseText_ThrowsFriendlyMessage_OnMalformedJson()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() => OllamaClient.ExtractResponseText("not json"));
+
+        Assert.Equal("Ollama returned an unexpected response format.", ex.Message);
+    }
+
+    [Fact]
+    public void ExtractResponseText_ThrowsFriendlyMessage_WhenResponseFieldMissing()
+    {
+        var body = """{"model":"test","done":true}""";
+
+        var ex = Assert.Throws<InvalidOperationException>(() => OllamaClient.ExtractResponseText(body));
+
+        Assert.Equal("Ollama returned an unexpected response format.", ex.Message);
+    }
 }
