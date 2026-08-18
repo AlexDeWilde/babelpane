@@ -51,7 +51,13 @@ public sealed class OllamaClient
         response.EnsureSuccessStatusCode();
 
         var body = await response.Content.ReadAsStringAsync(ct);
-        using var doc = JsonDocument.Parse(body);
+        return ExtractResponseText(body);
+    }
+
+    /// <summary>Extracts the "response" field from an Ollama /api/generate reply body.</summary>
+    public static string ExtractResponseText(string responseBody)
+    {
+        using var doc = JsonDocument.Parse(responseBody);
         return doc.RootElement.GetProperty("response").GetString() ?? string.Empty;
     }
 }

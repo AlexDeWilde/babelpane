@@ -7,7 +7,7 @@ Keep this file short and current.
 - User problem: no fast, private way to translate arbitrary on-screen content (contracts, scans, browser pages, messages) without uploading it to a cloud service.
 - Intended outcome: point a floating overlay at foreign-language text on screen and get a translation rendered in place, entirely offline.
 - Core journey: hotkey opens pane → drag/resize over text → hotkey/`[go]` triggers capture+translate → translated text renders in place → hotkey closes.
-- Current milestone: M4 — automated checks + walkthrough (M1-M3 done; settings window + pane-geometry persistence, both in the brief's Must Demonstrate list but not in the original 4 milestones, are also done and verified).
+- Current milestone: all 4 original milestones (M1-M4) done and verified, plus settings window + pane-geometry persistence from the brief's Must Demonstrate list.
 
 ## Scope
 Required now (M1):
@@ -32,7 +32,7 @@ Do not add features outside the current milestone without explaining why they ar
 ## Commands
 - Install: `dotnet restore BabelPane.sln` (requires .NET 10 SDK; also installed .NET 9 SDK this session for the first build attempt — kept, unused by this project)
 - Run: `dotnet run --project src/BabelPane/BabelPane.csproj`
-- Test: *(none yet — no test project created)*
+- Test: `dotnet test BabelPane.sln`
 - Lint or format: `dotnet format BabelPane.sln`
 - Build: `dotnet build BabelPane.sln`
 
