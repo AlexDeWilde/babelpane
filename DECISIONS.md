@@ -94,3 +94,11 @@ quality of the product. Do not paste full conversations.
 - **Team decision:** Accepted after visual confirmation — text now fills the available space at a comfortable reading size.
 - **Reason:** Direct visual defect caught in manual milestone verification, not a hypothetical.
 - **Consequence:** `MainWindow.xaml.cs` has an `AutoFitText()` helper; `OutputContainer.SizeChanged` re-triggers it so resizing the pane after a translation keeps the fit correct. The `[go]` button was also relocated to bottom-right (left of the resize grip) after the same test showed it overlapping the top-left of the translated text.
+
+### M3: "no text detected" needs an explicit model sentinel, not an empty-string check
+
+- **Context:** M3 added a retryable empty/failure state per the brief ("returns nothing usable" should stay open, not close). Manual testing over a blank area showed the model doesn't reliably return an empty string when there's no text in the image — it sometimes echoed fragments of the prompt instead, which slipped past an `IsNullOrWhiteSpace` check and got rendered as if it were a real translation.
+- **Claude Code proposal:** Added an explicit instruction to the prompt — respond with a fixed sentinel (`NO_TEXT_FOUND`) when no legible text is present — and check the response for that sentinel (via `Contains`, not exact match, since instruction-following isn't perfectly literal) in addition to the whitespace check.
+- **Team decision:** Accepted after retest confirmed the blank-area case now shows the correct "no text detected" message.
+- **Reason:** A model's natural-language response can't be trusted to reliably signal "nothing to report" on its own; giving it an explicit, checkable token is more robust than inferring intent from prose.
+- **Consequence:** `OllamaClient.NoTextSentinel` is the contract between the prompt and `MainWindow`'s result handling — if the prompt ever changes, the sentinel instruction and the check in `RunTriggerAsync` must change together.

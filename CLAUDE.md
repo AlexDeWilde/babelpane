@@ -7,7 +7,7 @@ Keep this file short and current.
 - User problem: no fast, private way to translate arbitrary on-screen content (contracts, scans, browser pages, messages) without uploading it to a cloud service.
 - Intended outcome: point a floating overlay at foreign-language text on screen and get a translation rendered in place, entirely offline.
 - Core journey: hotkey opens pane → drag/resize over text → hotkey/`[go]` triggers capture+translate → translated text renders in place → hotkey closes.
-- Current milestone: M3 — empty/loading/error/invalid-input states (busy indicator and a minimal happy-path/error message already exist from M2; M3 polishes these and adds mid-request hotkey-cancel).
+- Current milestone: M4 — automated checks + walkthrough (M1-M3 are done: shell, core journey, and empty/error/cancel states are all verified).
 
 ## Scope
 Required now (M1):

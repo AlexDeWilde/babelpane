@@ -10,6 +10,14 @@ namespace BabelPane;
 /// </summary>
 public sealed class OllamaClient
 {
+    /// <summary>
+    /// Sentinel the model is instructed to return verbatim when the image has
+    /// no legible text. An empty/whitespace response can't be relied on for
+    /// this — a blank image sometimes makes the model echo prompt fragments
+    /// instead of returning nothing.
+    /// </summary>
+    public const string NoTextSentinel = "NO_TEXT_FOUND";
+
     private readonly HttpClient _http;
 
     public OllamaClient(string baseUrl, TimeSpan timeout)
@@ -27,7 +35,8 @@ public sealed class OllamaClient
         var prompt =
             $"Perform OCR on this image and translate all the text you find into {targetLanguage}. " +
             "Output only the translated text, preserving paragraph breaks. " +
-            "Do not add commentary, labels, or the original text.";
+            "Do not add commentary, labels, or the original text. " +
+            $"If the image contains no legible text at all, respond with exactly this and nothing else: {NoTextSentinel}";
 
         var payload = new
         {

@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     public PaneState State { get; private set; } = PaneState.Closed;
 
     private readonly OllamaClient _ollama = new(AppConfig.OllamaEndpoint, AppConfig.RequestTimeout);
+    private CancellationTokenSource? _cts;
 
     public MainWindow()
     {
@@ -47,7 +48,9 @@ public partial class MainWindow : Window
                 break;
 
             case PaneState.Busy:
-                // Mid-request cancel is a later milestone; ignored for now.
+                _cts?.Cancel();
+                Hide();
+                State = PaneState.Closed;
                 break;
 
             case PaneState.Triggered:
@@ -71,21 +74,43 @@ public partial class MainWindow : Window
         ContentBackdrop.Visibility = Visibility.Visible;
         BusyPanel.Visibility = Visibility.Visible;
 
+        _cts = new CancellationTokenSource();
         try
         {
             var pngBytes = ScreenCapture.CapturePaneRegion(this);
-            var translation = await _ollama.TranslateImageAsync(pngBytes, AppConfig.ModelName, AppConfig.TargetLanguage);
-            OutputText.Text = string.IsNullOrWhiteSpace(translation) ? "(no text detected)" : translation.Trim();
+            var translation = await _ollama.TranslateImageAsync(
+                pngBytes, AppConfig.ModelName, AppConfig.TargetLanguage, _cts.Token);
+
+            var trimmed = translation.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) ||
+                trimmed.Contains(OllamaClient.NoTextSentinel, StringComparison.OrdinalIgnoreCase))
+            {
+                // Grouped with the failure state per the brief: stays open, retryable.
+                OutputText.Text = "No text detected here. Reposition the pane, then press the hotkey or [go] to retry.";
+                State = PaneState.Open;
+            }
+            else
+            {
+                OutputText.Text = trimmed;
+                State = PaneState.Triggered;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled by a hotkey press while busy; CycleState's Busy branch
+            // already hid the pane and reset state. Nothing more to do.
         }
         catch (Exception ex)
         {
-            OutputText.Text = $"Translation failed: {ex.Message}";
+            OutputText.Text = $"Translation failed: {ex.Message}\nPress the hotkey or [go] to retry.";
+            State = PaneState.Open;
         }
         finally
         {
             BusyPanel.Visibility = Visibility.Collapsed;
-            State = PaneState.Triggered;
             AutoFitText();
+            _cts?.Dispose();
+            _cts = null;
         }
     }
 
