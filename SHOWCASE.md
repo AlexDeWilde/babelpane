@@ -63,9 +63,10 @@ message and retry path.
 - **Tests, lint, type checks, or build commands completed:** `dotnet build
   BabelPane.sln` — 0 warnings, 0 errors. `dotnet test BabelPane.sln` — 7/7
   passed (`AppConfig` JSON round-trip incl. null geometry; Ollama response
-  parsing incl. malformed-JSON and missing-field cases).
-- **Not verified:** `dotnet format BabelPane.sln` (the documented lint
-  command) was not run this session. Hotkey registration, screen capture, and
+  parsing incl. malformed-JSON and missing-field cases). `dotnet format
+  BabelPane.sln` — ran clean, fixed one spacing nit in the WPF-scaffolded
+  `AssemblyInfo.cs`.
+- **Not verified:** Hotkey registration, screen capture, and
   drag/resize are GUI/OS-interop paths not covered by automated tests —
   verified manually instead.
 

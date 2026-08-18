@@ -76,9 +76,10 @@ bodies, a placeholder endpoint URL) — no real settings file or network call.
 ```powershell
 dotnet build BabelPane.sln   # build succeeded, 0 warnings, 0 errors
 dotnet test BabelPane.sln    # 7/7 tests passed
+dotnet format BabelPane.sln  # ran clean; fixed one spacing nit in AssemblyInfo.cs
 ```
 
-Both commands were run and verified passing in this session. Test coverage is
+All three commands were run and verified passing in this session. Test coverage is
 limited to logic that doesn't require the GUI or a live network call: `AppConfig`
 JSON round-tripping, and parsing/error-handling of Ollama's response JSON.
 Hotkey registration, screen capture, and drag/resize are GUI/OS-interop code,
