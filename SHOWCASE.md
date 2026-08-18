@@ -107,6 +107,11 @@ have — worth deciding deliberately, not defaulting into.
 - No validation of translation quality/accuracy — entirely dependent on the
   configured local model. Literal mode's prompt is tuned to one model's
   specific failure modes and may need retuning for a different model.
+- Captured regions are upscaled 2x before OCR (see the post-demo bug-hunt
+  section below); a very small pane over dense text may still benefit from
+  being resized larger before triggering.
+- `TimeoutSeconds` defaults to 120s; Literal mode's longer prompt roughly
+  doubled measured response time versus the old shorter default prompt.
 
 ## Post-Deliverable Addition: Multi-Monitor Support
 
@@ -158,6 +163,41 @@ second issue then surfaced — the model bracketing hedged word choices, e.g.
 alternates, no hedging" instruction, added to both modes' prompts since it's
 an output-cleanliness concern rather than a literal-vs-summary one. Confirmed
 clean on retest. See `DECISIONS.md` for the full iteration record.
+
+## Post-Deliverable Bug Hunt: Demo-Day Regressions
+
+Right after a colleague demo, the user reported translations coming back as
+an empty pane with no text and no Copy button — a real regression, not a
+one-off. Root cause: `RunTriggerAsync`'s cancellation handling assumed
+`OperationCanceledException` could only mean "the user pressed the hotkey to
+cancel," but `HttpClient`'s own request timeout throws the identical
+exception type — a genuine timeout was being silently swallowed as if it
+were an already-handled user action, leaving the pane stuck with no
+feedback at all. Fixed by checking *which* token was actually cancelled.
+
+Fixing that surfaced a real timeout underneath: timing the user's actual
+Ollama server directly showed a trivial text prompt taking 28s, and the new
+Literal-mode prompt taking roughly 2x as long as the old default prompt on
+comparable text (~14s vs. ~7s) — pushing real image-based requests close to
+the 60s default. Raised the default to 120s.
+
+A third issue then surfaced once translations were completing: real
+captures at the user's actual (small) pane size kept coming back cut off
+mid-sentence, confirmed as genuine data loss (not a display bug) by
+comparing the on-screen text to the clipboard-copied text — identical, both
+incomplete. Diagnosed with a controlled experiment against the live
+server: the exact same source text rendered into a large image translated
+completely every time; the same content rendered at the user's actual small
+pane size came back garbled and incomplete, with Ollama's own
+`done_reason: "stop"` showing the *model itself* decided it was done reading
+an image that was too small/dense for it — not a token-limit cutoff.
+Summary mode's forgiving paraphrasing had likely been masking this same
+limitation all along. Fixed by upscaling every capture 2x before sending it
+for OCR, confirmed against the user's own previously-failing case.
+
+None of this was guessed at — every fix was driven by directly reproducing
+the failure against the real Ollama server first. See `DECISIONS.md` for
+the full record of each bug, its root cause, and its verification.
 
 ## Bridge to the Capstone
 

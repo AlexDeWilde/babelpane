@@ -112,3 +112,13 @@ Known Limitations note on that below.
   **Literal mode**'s prompt is tuned against one real vision model's specific
   failure modes (stilted word-for-word phrasing, bracketed hedging); a
   different model may need different wording to behave the same way.
+- The captured region is upscaled 2x before being sent for OCR — a small pane
+  captured at its literal on-screen size gave one real model too few pixels
+  to read dense text reliably, producing incomplete/garbled output that
+  Summary mode's forgiving paraphrasing had been masking (see `DECISIONS.md`).
+  A very small pane over dense text may still benefit from being resized
+  larger before triggering.
+- `TimeoutSeconds` defaults to 120s. Literal mode's longer prompt roughly
+  doubles response time versus the old default prompt on one measured setup
+  (~7s → ~14s for comparable text); a slow model/server may still need a
+  higher value than the default.

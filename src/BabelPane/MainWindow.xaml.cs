@@ -128,10 +128,18 @@ public partial class MainWindow : Window
                 CopyButton.Visibility = Visibility.Visible;
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_cts is { IsCancellationRequested: true })
         {
             // Cancelled by a hotkey press while busy; CycleState's Busy branch
             // already hid the pane and reset state. Nothing more to do.
+        }
+        catch (OperationCanceledException)
+        {
+            // Not our own cancellation — e.g. HttpClient's request timeout elapsed.
+            // A real failure, not a silent user-initiated cancel: without this,
+            // the pane would be left stuck in Busy with no text and no Copy button.
+            OutputText.Text = "Translation timed out. Press the hotkey or click the pane to retry.";
+            State = PaneState.Open;
         }
         catch (Exception ex)
         {
