@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -7,13 +8,30 @@ namespace BabelPane;
 
 public partial class App : Application
 {
+    // Fixed, app-specific name so a second launch attempt can detect the
+    // first instance is already running; distinct from BabelPaneSky's so
+    // the two products can run side by side.
+    private const string SingleInstanceMutexName = "BabelPane-SingleInstance-9F1E7B9E-2E1B-4F1D-8B0B-6F1A9C6DB2B4";
+
     private MainWindow? _mainWindow;
     private HotkeyManager? _hotkeyManager;
     private NotifyIcon? _trayIcon;
+    private Mutex? _singleInstanceMutex;
+    private bool _isPrimaryInstance;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        _singleInstanceMutex = new Mutex(true, SingleInstanceMutexName, out _isPrimaryInstance);
+        if (!_isPrimaryInstance)
+        {
+            System.Windows.MessageBox.Show(
+                "BabelPane is already running. Check your system tray.",
+                "BabelPane", MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
 
         _mainWindow = new MainWindow();
 
@@ -95,6 +113,11 @@ public partial class App : Application
         SaveGeometry();
         _trayIcon?.Dispose();
         _hotkeyManager?.Dispose();
+        if (_isPrimaryInstance)
+        {
+            _singleInstanceMutex?.ReleaseMutex();
+        }
+        _singleInstanceMutex?.Dispose();
         base.OnExit(e);
     }
 
