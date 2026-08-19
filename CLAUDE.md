@@ -7,7 +7,7 @@ Keep this file short and current.
 - User problem: no fast, private way to translate arbitrary on-screen content (contracts, scans, browser pages, messages) without uploading it to a cloud service.
 - Intended outcome: point a floating overlay at foreign-language text on screen and get a translation rendered in place, entirely offline.
 - Core journey: hotkey opens pane → drag/resize (any edge/corner) over text → hotkey or a click on the pane triggers capture+translate → translated text renders in place → hotkey closes, or `[Copy]` copies it to the clipboard and closes.
-- Current milestone: all 4 original milestones (M1-M4) done and verified, plus settings window + pane-geometry persistence from the brief's Must Demonstrate list, plus post-deliverable multi-monitor support, click-to-trigger/native resize/copy-to-clipboard, a literal/summary translation mode toggle, a post-demo bug-hunt fixing a silent-timeout bug, a too-tight default timeout, and incomplete OCR on small captures, a two-column Settings window (fields + always-visible onboarding help) that opens automatically on launch, and a 15s self-closing countdown on that first-launch auto-open only (manual reopens from the tray stay open indefinitely), and single-instance enforcement (a second launch shows an "already running" message and exits instead of running alongside the first).
+- Current milestone: all 4 original milestones (M1-M4) done and verified, plus settings window + pane-geometry persistence from the brief's Must Demonstrate list, plus post-deliverable multi-monitor support, click-to-trigger/native resize/copy-to-clipboard, a literal/summary translation mode toggle, a post-demo bug-hunt fixing a silent-timeout bug, a too-tight default timeout, and incomplete OCR on small captures, a two-column Settings window (fields + always-visible onboarding help) that opens automatically on launch, and a 15s self-closing countdown on that first-launch auto-open only (manual reopens from the tray stay open indefinitely), and single-instance enforcement (a second launch shows an "already running" message and exits instead of running alongside the first), and a portable, framework-dependent `dotnet publish` output (`BabelPane.exe` + dependency DLLs, no self-contained runtime bundled) so the app can run without `dotnet run`.
 
 ## Scope
 Required now (M1):
@@ -32,6 +32,7 @@ Still explain new dependencies and meaningful architecture decisions (see Workin
 - Test: `dotnet test BabelPane.sln`
 - Lint or format: `dotnet format BabelPane.sln`
 - Build: `dotnet build BabelPane.sln`
+- Package (portable exe): `dotnet publish src/BabelPane/BabelPane.csproj -c Release -r win-x64 --self-contained false` — output in `src/BabelPane/bin/Release/net10.0-windows/win-x64/publish/`; requires the .NET 10 desktop runtime on the target machine (same requirement as `dotnet run` today). Re-run the same command any time the app changes to refresh the package — nothing is cached or versioned, it just overwrites `publish/`.
 
 Never report a command as passing unless it actually ran successfully. `dotnet run` launches a GUI window — verify it visually, don't assume from exit code alone (a backgrounded GUI process won't exit until closed).
 
