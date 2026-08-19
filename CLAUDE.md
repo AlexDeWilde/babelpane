@@ -7,7 +7,7 @@ Keep this file short and current.
 - User problem: no fast, private way to translate arbitrary on-screen content (contracts, scans, browser pages, messages) without uploading it to a cloud service.
 - Intended outcome: point a floating overlay at foreign-language text on screen and get a translation rendered in place, entirely offline.
 - Core journey: hotkey opens pane → drag/resize (any edge/corner) over text → hotkey or a click on the pane triggers capture+translate → translated text renders in place → hotkey closes, or `[Copy]` copies it to the clipboard and closes.
-- Current milestone: all 4 original milestones (M1-M4) done and verified, plus settings window + pane-geometry persistence from the brief's Must Demonstrate list, plus post-deliverable multi-monitor support, click-to-trigger/native resize/copy-to-clipboard, a literal/summary translation mode toggle, a post-demo bug-hunt fixing a silent-timeout bug, a too-tight default timeout, and incomplete OCR on small captures, a two-column Settings window (fields + always-visible onboarding help) that opens automatically on launch, and a 15s self-closing countdown on that first-launch auto-open only (manual reopens from the tray stay open indefinitely), and single-instance enforcement (a second launch shows an "already running" message and exits instead of running alongside the first), and a portable, framework-dependent `dotnet publish` output (`BabelPane.exe` + dependency DLLs, no self-contained runtime bundled) so the app can run without `dotnet run`.
+- Current milestone: all 4 original milestones (M1-M4) done and verified, plus settings window + pane-geometry persistence from the brief's Must Demonstrate list, plus post-deliverable multi-monitor support, click-to-trigger/native resize/copy-to-clipboard, a literal/summary translation mode toggle, a post-demo bug-hunt fixing a silent-timeout bug, a too-tight default timeout, and incomplete OCR on small captures, a two-column Settings window (fields + always-visible onboarding help) that opens automatically on launch, and a 15s self-closing countdown on that first-launch auto-open only (manual reopens from the tray stay open indefinitely), and single-instance enforcement (a second launch shows an "already running" message and exits instead of running alongside the first), and a truly portable, self-contained single-file `dotnet publish` output (one `BabelPane.exe`, no companion DLLs/config, no .NET runtime install required on the target machine) so the app can run without `dotnet run` on any Windows PC.
 
 ## Scope
 Required now (M1):
@@ -15,7 +15,7 @@ Required now (M1):
 - Borderless, transparent-center pane: draggable, resizable, closeable with the mouse.
 - Global hotkey (default `Win+Alt+X`) cycling open → (trigger, stubbed) → close.
 
-The original M1-only non-goals list (packaged `.exe`, cloud LLM support, etc.) applied while development time was uncertain. That milestone is done and verified, so it no longer constrains new work: the project is now in an open build phase, adding features beyond the original brief on request. Backlog ideas (portable exe, cloud LLM API selection, etc.) are tracked in `addons.md` rather than treated as out of scope.
+The original M1-only non-goals list (packaged `.exe`, cloud LLM support, etc.) applied while development time was uncertain. That milestone is done and verified, so it no longer constrains new work: the project is now in an open build phase, adding features beyond the original brief on request.
 
 Still explain new dependencies and meaningful architecture decisions (see Working Agreement) — "build build build" doesn't mean skip that.
 
@@ -32,7 +32,7 @@ Still explain new dependencies and meaningful architecture decisions (see Workin
 - Test: `dotnet test BabelPane.sln`
 - Lint or format: `dotnet format BabelPane.sln`
 - Build: `dotnet build BabelPane.sln`
-- Package (portable exe): `dotnet publish src/BabelPane/BabelPane.csproj -c Release -r win-x64 --self-contained false` — output in `src/BabelPane/bin/Release/net10.0-windows/win-x64/publish/`; requires the .NET 10 desktop runtime on the target machine (same requirement as `dotnet run` today). Re-run the same command any time the app changes to refresh the package — nothing is cached or versioned, it just overwrites `publish/`.
+- Package (portable single-file exe): `dotnet publish src/BabelPane/BabelPane.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true` — output in `src/BabelPane/bin/Release/net10.0-windows/win-x64/publish/`; only `BabelPane.exe` from that folder needs to be copied anywhere — it bundles the .NET runtime, so the target machine needs nothing preinstalled. Re-run the same command any time the app changes to refresh the package — nothing is cached or versioned, it just overwrites `publish/`.
 
 Never report a command as passing unless it actually ran successfully. `dotnet run` launches a GUI window — verify it visually, don't assume from exit code alone (a backgrounded GUI process won't exit until closed).
 

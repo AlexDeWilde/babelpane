@@ -102,7 +102,6 @@ have — worth deciding deliberately, not defaulting into.
 - Source language auto-detected; only the target language is configurable.
 - Autofit + wrap rendering, not layout-matched to the source.
 - No translation history, logging, or side-by-side view.
-- Dev-process only, no packaged `.exe`.
 - ~120ms synchronous UI-thread pause during every capture (see `DECISIONS.md`).
 - No validation of translation quality/accuracy — entirely dependent on the
   configured local model. Literal mode's prompt is tuned to one model's

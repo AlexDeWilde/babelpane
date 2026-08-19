@@ -51,6 +51,25 @@ dotnet run --project src/BabelPane/BabelPane.csproj
 
 BabelPane starts in the system tray — no window opens until you use it.
 
+## Build a portable .exe
+
+To build a single-file `BabelPane.exe` you can copy to any Windows PC and run
+with zero prerequisites — no .NET runtime install, no companion DLLs:
+
+```powershell
+dotnet publish src/BabelPane/BabelPane.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+```
+
+The result is `src/BabelPane/bin/Release/net10.0-windows/win-x64/publish/BabelPane.exe`
+(~170MB, since it bundles the whole .NET runtime). Only that one file needs to
+go anywhere else — verified by copying just the `.exe` into an empty folder on
+its own and launching it from there. Building it still requires the .NET 10
+SDK on the machine doing the build (same as `dotnet run` above); the resulting
+`.exe` does not, on whatever machine it ends up running on.
+
+Re-run the same command any time the code changes to refresh the package —
+nothing is cached or versioned, it just overwrites the `publish/` folder.
+
 ## Verify the core journey
 
 1. Press the global hotkey (`Win+Alt+X` by default). The pane opens, empty, at
@@ -110,7 +129,6 @@ Known Limitations note on that below.
 - Translated text is autofit and wrapped, not matched to the original layout
   or line breaks.
 - No translation history, logging, or side-by-side original/translated view.
-- Dev-process only — no packaged, standalone `.exe`.
 - A ~120ms synchronous pause during screen capture briefly blocks the UI
   thread on every trigger; not perceptible in normal use (see `DECISIONS.md`).
 - Translation quality depends entirely on the local model you configure —
