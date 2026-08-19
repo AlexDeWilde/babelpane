@@ -23,6 +23,8 @@ public partial class App : Application
         AppConfig.SettingsChanged += OnSettingsChanged;
 
         _trayIcon = CreateTrayIcon();
+
+        OpenSettingsWindow(autoCloseOnFirstLaunch: true);
     }
 
     private void RegisterHotkeyFromSettings()
@@ -74,9 +76,9 @@ public partial class App : Application
         }
     }
 
-    private void OpenSettingsWindow()
+    private void OpenSettingsWindow(bool autoCloseOnFirstLaunch = false)
     {
-        new SettingsWindow().ShowDialog();
+        new SettingsWindow(autoCloseOnFirstLaunch).ShowDialog();
     }
 
     private void ExitApplication()

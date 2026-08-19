@@ -1,11 +1,19 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
+using System.Windows.Threading;
 
 namespace BabelPane;
 
 public partial class SettingsWindow : Window
 {
-    public SettingsWindow()
+    private const int AutoCloseSeconds = 15;
+
+    private readonly DispatcherTimer? _autoCloseTimer;
+    private int _autoCloseSecondsRemaining = AutoCloseSeconds;
+
+    public SettingsWindow(bool autoCloseOnFirstLaunch = false)
     {
         InitializeComponent();
 
@@ -21,6 +29,35 @@ public partial class SettingsWindow : Window
         AltCheck.IsChecked = cfg.HotkeyModifiers.HasFlag(HotkeyModifiers.Alt);
         ShiftCheck.IsChecked = cfg.HotkeyModifiers.HasFlag(HotkeyModifiers.Shift);
         KeyBox.Text = cfg.HotkeyKey.ToString();
+
+        if (autoCloseOnFirstLaunch)
+        {
+            AutoCloseText.Visibility = Visibility.Visible;
+            UpdateAutoCloseText();
+
+            _autoCloseTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _autoCloseTimer.Tick += AutoCloseTimer_Tick;
+            _autoCloseTimer.Start();
+            Closed += (_, _) => _autoCloseTimer.Stop();
+        }
+    }
+
+    private void AutoCloseTimer_Tick(object? sender, EventArgs e)
+    {
+        _autoCloseSecondsRemaining--;
+        if (_autoCloseSecondsRemaining <= 0)
+        {
+            _autoCloseTimer!.Stop();
+            Close();
+            return;
+        }
+
+        UpdateAutoCloseText();
+    }
+
+    private void UpdateAutoCloseText()
+    {
+        AutoCloseText.Text = $"Closing automatically in {_autoCloseSecondsRemaining}s...";
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -84,5 +121,11 @@ public partial class SettingsWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        e.Handled = true;
     }
 }

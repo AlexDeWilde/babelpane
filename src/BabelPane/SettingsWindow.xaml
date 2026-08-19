@@ -5,57 +5,141 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
         Title="BabelPane Settings"
-        Width="420" SizeToContent="Height"
+        Width="780" Height="640" MinWidth="680" MinHeight="480"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
-    <StackPanel Margin="16">
-        <TextBlock Text="Translations are machine-generated — verify important content before relying on it."
-                   TextWrapping="Wrap"
-                   Foreground="Gray"
-                   Margin="0,0,0,12" />
+        ResizeMode="CanResizeWithGrip">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <Label Content="Ollama endpoint URL" Padding="0" />
-        <TextBox x:Name="EndpointBox" Margin="0,4,0,0" />
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <Label Content="Model name" Padding="0" Margin="0,12,0,0" />
-        <TextBox x:Name="ModelBox" Margin="0,4,0,0" />
+            <!-- Left: existing settings fields -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="Translations are machine-generated — verify important content before relying on it."
+                               TextWrapping="Wrap"
+                               Foreground="Gray"
+                               Margin="0,0,0,12" />
 
-        <Label Content="Target language" Padding="0" Margin="0,12,0,0" />
-        <TextBox x:Name="LanguageBox" Margin="0,4,0,0" />
+                    <Label Content="Ollama endpoint URL" Padding="0" />
+                    <TextBox x:Name="EndpointBox" Margin="0,4,0,0" />
 
-        <Label Content="Translation mode" Padding="0" Margin="0,12,0,0" />
-        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-            <RadioButton x:Name="LiteralModeRadio"
-                         Content="Literal translation"
-                         GroupName="TranslationMode"
-                         Margin="0,0,16,0"
-                         VerticalAlignment="Center" />
-            <RadioButton x:Name="SummaryModeRadio"
-                         Content="Summary interpretation"
-                         GroupName="TranslationMode"
-                         VerticalAlignment="Center" />
-        </StackPanel>
+                    <Label Content="Model name" Padding="0" Margin="0,12,0,0" />
+                    <TextBox x:Name="ModelBox" Margin="0,4,0,0" />
 
-        <Label Content="Request timeout (seconds)" Padding="0" Margin="0,12,0,0" />
-        <TextBox x:Name="TimeoutBox" Margin="0,4,0,0" />
+                    <Label Content="Target language" Padding="0" Margin="0,12,0,0" />
+                    <TextBox x:Name="LanguageBox" Margin="0,4,0,0" />
 
-        <Label Content="Global hotkey" Padding="0" Margin="0,12,0,0" />
-        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-            <CheckBox x:Name="WinCheck" Content="Win" Margin="0,0,12,0" VerticalAlignment="Center" />
-            <CheckBox x:Name="CtrlCheck" Content="Ctrl" Margin="0,0,12,0" VerticalAlignment="Center" />
-            <CheckBox x:Name="AltCheck" Content="Alt" Margin="0,0,12,0" VerticalAlignment="Center" />
-            <CheckBox x:Name="ShiftCheck" Content="Shift" Margin="0,0,12,0" VerticalAlignment="Center" />
-            <TextBox x:Name="KeyBox" Width="32" MaxLength="1" />
-        </StackPanel>
+                    <Label Content="Translation mode" Padding="0" Margin="0,12,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <RadioButton x:Name="LiteralModeRadio"
+                                     Content="Literal translation"
+                                     GroupName="TranslationMode"
+                                     Margin="0,0,16,0"
+                                     VerticalAlignment="Center" />
+                        <RadioButton x:Name="SummaryModeRadio"
+                                     Content="Summary interpretation"
+                                     GroupName="TranslationMode"
+                                     VerticalAlignment="Center" />
+                    </StackPanel>
 
-        <TextBlock x:Name="ValidationText"
-                   Foreground="Red"
-                   TextWrapping="Wrap"
-                   Margin="0,12,0,0" />
+                    <Label Content="Request timeout (seconds)" Padding="0" Margin="0,12,0,0" />
+                    <TextBox x:Name="TimeoutBox" Margin="0,4,0,0" />
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" Width="80" Margin="0,0,10,0" Click="Cancel_Click" />
-            <Button Content="Save" Width="80" Click="Save_Click" IsDefault="True" />
-        </StackPanel>
-    </StackPanel>
+                    <Label Content="Global hotkey" Padding="0" Margin="0,12,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <CheckBox x:Name="WinCheck" Content="Win" Margin="0,0,12,0" VerticalAlignment="Center" />
+                        <CheckBox x:Name="CtrlCheck" Content="Ctrl" Margin="0,0,12,0" VerticalAlignment="Center" />
+                        <CheckBox x:Name="AltCheck" Content="Alt" Margin="0,0,12,0" VerticalAlignment="Center" />
+                        <CheckBox x:Name="ShiftCheck" Content="Shift" Margin="0,0,12,0" VerticalAlignment="Center" />
+                        <TextBox x:Name="KeyBox" Width="32" MaxLength="1" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="ValidationText"
+                               Foreground="Red"
+                               TextWrapping="Wrap"
+                               Margin="0,12,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Column="1" Width="1" Background="#FFD0D0D0" Margin="12,0" />
+
+            <!-- Right: help content -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="12,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="How to use" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
+
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="1. " FontWeight="Bold" /><Run Text="Open the pane" FontWeight="Bold" /><Run Text=" — press your global hotkey (default Win+Alt+X) or choose &quot;Open widget pane&quot; from the tray icon." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="2. " FontWeight="Bold" /><Run Text="Position it" FontWeight="Bold" /><Run Text=" — drag the pane over the foreign-language text you want translated (any window, any monitor), and resize it from any edge or corner like a normal window." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="3. " FontWeight="Bold" /><Run Text="Trigger translation" FontWeight="Bold" /><Run Text=" — press the hotkey again, or just click anywhere inside the pane without dragging it. A busy indicator shows while BabelPane reads and translates the text." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="4. " FontWeight="Bold" /><Run Text="Read the result" FontWeight="Bold" /><Run Text=" — the translation appears in place, sized to fit the pane." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="5. " FontWeight="Bold" /><Run Text="Copy or close" FontWeight="Bold" /><Run Text=" — click [Copy] to copy the text and close in one step, press the hotkey a third time, or press Escape at any time to close immediately." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="6. " FontWeight="Bold" /><Run Text="Cancel mid-request" FontWeight="Bold" /><Run Text=" — pressing the hotkey again while a translation is in progress cancels it and closes the pane right away." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
+                        <Run Text="7. " FontWeight="Bold" /><Run Text="If something goes wrong" FontWeight="Bold" /><Run Text=" — the pane stays open with a clear message so you can retry without losing your position or size." />
+                    </TextBlock>
+
+                    <TextBlock Text="Make sure you have" FontWeight="Bold" FontSize="14" Margin="0,4,0,8" />
+
+                    <TextBlock Text="Required to run BabelPane:" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="• " /><Run Text="Windows 11" FontWeight="Bold" /><Run Text=" — BabelPane uses Windows-only APIs and won't run on other platforms." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
+                        <Run Text="• " /><Run Text=".NET 10 Desktop Runtime" FontWeight="Bold" /><Run Text=" — " /><Hyperlink NavigateUri="https://dotnet.microsoft.com/download/dotnet/10.0" RequestNavigate="Hyperlink_RequestNavigate">download here</Hyperlink><Run Text=". If BabelPane fails to start at all, this is the most likely cause." />
+                    </TextBlock>
+
+                    <TextBlock Text="Required for translation to work:" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="• " /><Run Text="Ollama, installed and running" FontWeight="Bold" /><Run Text=" — " /><Hyperlink NavigateUri="https://ollama.com" RequestNavigate="Hyperlink_RequestNavigate">download here</Hyperlink><Run Text=". Ollama must be running in the background before you trigger a translation." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                        <Run Text="• " /><Run Text="A vision-capable model, pulled and named exactly as set below" FontWeight="Bold" /><Run Text=" — e.g. run &quot;ollama pull gemma3:4b&quot; in a terminal, then make sure the Model name field to the left matches it exactly. Browse available models at " /><Hyperlink NavigateUri="https://ollama.com/search?c=vision" RequestNavigate="Hyperlink_RequestNavigate">ollama.com/search</Hyperlink><Run Text="." />
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
+                        <Run Text="• " /><Run Text="The correct endpoint address to the left" FontWeight="Bold" /><Run Text=" — defaults to http://localhost:11434 for Ollama running on this machine. If Ollama runs on another computer on your network, that machine must expose Ollama to the network, and the Ollama endpoint URL field must point to its address (e.g. http://192.168.1.10:11434)." />
+                    </TextBlock>
+
+                    <TextBlock TextWrapping="Wrap" FontStyle="Italic" Foreground="Gray"
+                               Text="If a translation fails immediately or times out, this list is the first thing to check." />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="AutoCloseText"
+                       Grid.Column="0"
+                       VerticalAlignment="Center"
+                       Foreground="Gray"
+                       Visibility="Collapsed" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Cancel" Width="80" Margin="0,0,10,0" Click="Cancel_Click" />
+                <Button Content="Save" Width="80" Click="Save_Click" IsDefault="True" />
+            </StackPanel>
+        </Grid>
+    </Grid>
 </Window>

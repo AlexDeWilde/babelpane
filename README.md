@@ -31,7 +31,13 @@ cd babelpane
 dotnet restore BabelPane.sln
 ```
 
-On first run, open Settings from the tray icon and set:
+Settings opens automatically every time you launch BabelPane (reopen it
+anytime from the tray icon too). Its right-hand column explains how to use
+the app and lists everything you need (Ollama, a vision-capable model, .NET
+10) with links to install each one. On startup only, it closes itself after
+15 seconds (shown by a countdown next to the buttons) so it doesn't linger
+once you already know the ropes — Settings opened manually from the tray
+stays open until you close it. On the left, set:
 - **Ollama endpoint URL** — defaults to `http://localhost:11434`
 - **Model name** — the vision-capable model you pulled in Ollama
 - **Target language**, **translation mode** (Literal, the default, or Summary),
